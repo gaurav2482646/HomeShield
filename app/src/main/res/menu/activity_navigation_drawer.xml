@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_camera"
+            android:icon="@mipmap/smarthome"
+            android:title="Home Shield" />
+        <item
+            android:id="@+id/nav_gallery"
+            android:icon="@mipmap/sensor"
+            android:title="Sensors List" />
+        <item
+            android:id="@+id/nav_slideshow"
+            android:icon="@mipmap/settings"
+            android:title="Settings" />
+        <item
+            android:id="@+id/nav_manage"
+            android:icon="@mipmap/logout"
+            android:title="Logout" />
+    </group>
+
+    <item android:title="Communicate">
+        <menu>
+            <item
+                android:id="@+id/nav_share"
+                android:icon="@mipmap/feedback"
+
+                android:title="Feedback" />
+            <item
+                android:id="@+id/nav_send"
+                android:icon="@mipmap/like"
+                android:title="Like us" />
+        </menu>
+    </item>
+
+</menu>

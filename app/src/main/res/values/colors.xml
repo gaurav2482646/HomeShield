@@ -18,4 +18,11 @@
     <color name="base">#AAAAAA</color>
     <color name="iron">#CCCCCC</color>
     <color name="white">#FFFFFF</color>
+
+    //New Colors
+
+    <color name="colorPrimaryBricon">#ffb026</color>
+    <color name="colorAccentBricon">#283f47</color>
+    <color name="colorTextBricon">#373737</color>
+    <color name="colorTextHintBricon">#e8e8e8</color>
 </resources>

@@ -72,6 +72,7 @@ public class LoginActivity extends AppCompatActivity {
         String password = _passwordText.getText().toString();
 
         // TODO: Implement your own authentication logic here.
+        startActivity(new Intent(LoginActivity.this,NavigationActivity.class));
 
         new android.os.Handler().postDelayed(
                 new Runnable() {
@@ -80,6 +81,7 @@ public class LoginActivity extends AppCompatActivity {
                         onLoginSuccess();
                         // onLoginFailed();
                         progressDialog.dismiss();
+
                     }
                 }, 3000);
     }
