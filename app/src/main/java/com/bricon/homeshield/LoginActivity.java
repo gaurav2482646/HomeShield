@@ -2,19 +2,30 @@ package com.bricon.homeshield;
 
 
 import android.app.ProgressDialog;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import android.content.Intent;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+
 import butterknife.ButterKnife;
 import butterknife.Bind;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
@@ -25,10 +36,17 @@ public class LoginActivity extends AppCompatActivity {
     @Bind(R.id.btn_login) Button _loginButton;
     @Bind(R.id.link_signup) TextView _signupLink;
 
+    SharedPreferences preferences;
+    SharedPreferences.Editor editor;
+    String email,password;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        preferences= PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+        editor=preferences.edit();
+
         ButterKnife.bind(this);
 
         _loginButton.setOnClickListener(new View.OnClickListener() {
@@ -59,31 +77,24 @@ public class LoginActivity extends AppCompatActivity {
             onLoginFailed();
             return;
         }
+        onLoginSuccess();
 
-        _loginButton.setEnabled(false);
 
-        final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this,
-                R.style.AppTheme_Dark_Dialog);
-        progressDialog.setIndeterminate(true);
-        progressDialog.setMessage("Authenticating...");
-        progressDialog.show();
 
-        String email = _emailText.getText().toString();
-        String password = _passwordText.getText().toString();
+        email = _emailText.getText().toString();
+        password = _passwordText.getText().toString();
 
         // TODO: Implement your own authentication logic here.
-        startActivity(new Intent(LoginActivity.this,NavigationActivity.class));
+        //   startActivity(new Intent(LoginActivity.this,NavigationActivity.class));
 
-        new android.os.Handler().postDelayed(
+       /* new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
                         // On complete call either onLoginSuccess or onLoginFailed
                         onLoginSuccess();
                         // onLoginFailed();
-                        progressDialog.dismiss();
-
                     }
-                }, 3000);
+                }, 3000);*/
     }
 
 
@@ -106,8 +117,19 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void onLoginSuccess() {
-        _loginButton.setEnabled(true);
-        finish();
+
+        if(new Utils().checkConnection(LoginActivity.this))
+        {
+            new ProcessRegister().execute();
+
+
+
+
+        }
+        else
+        {
+            Toast.makeText(LoginActivity.this, "Please connect to the internet.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void onLoginFailed() {
@@ -119,8 +141,8 @@ public class LoginActivity extends AppCompatActivity {
     public boolean validate() {
         boolean valid = true;
 
-        String email = _emailText.getText().toString();
-        String password = _passwordText.getText().toString();
+        email = _emailText.getText().toString();
+        password = _passwordText.getText().toString();
 
         if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             _emailText.setError("enter a valid email address");
@@ -138,4 +160,90 @@ public class LoginActivity extends AppCompatActivity {
 
         return valid;
     }
+    String post2(String url)  {
+        try {
+            OkHttpClient client = new OkHttpClient();
+            Log.e(TAG, "post2: ready for sending: " + password + email);
+       /* RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+        Log.e(TAG, "post: request : "+body.toString() );*/
+            FormBody.Builder formBuilder = new FormBody.Builder();
+
+
+
+            formBuilder.add("email", email);
+            formBuilder.add("password", password);
+
+
+            Log.e(TAG, "post2: ready for sending: " + email + password);
+            RequestBody formBody = formBuilder.build();
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .post(formBody)
+                    .build();
+            Response response = client.newCall(request).execute();
+
+            return response.body().string();
+        }
+        catch (IOException e)
+        {
+            Log.e(TAG, "post2: exception: "+e.toString() );
+            return "0";
+        }
+    }
+
+    ProgressDialog pDialog1;
+    class ProcessRegister extends AsyncTask<String, String, String>
+    {
+        @Override
+        protected void onPreExecute() {
+            pDialog1=new ProgressDialog(LoginActivity.this);
+            pDialog1 = new ProgressDialog(LoginActivity.this,
+                    R.style.AppTheme_Dark_Dialog);
+            pDialog1.setIndeterminate(true);
+            pDialog1.setCancelable(false);
+            pDialog1.setMessage("Authenticating...");
+            pDialog1.show();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            try{Thread.sleep(2000);}catch (Exception e){}
+            return post2("http://www.androidcinema.com/brighten_controls/login.php");
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            pDialog1.dismiss();
+            // <br>Toast.makeText(getApplicationContext(),"result"+result,Toast.LENGTH_LONG).show();
+
+            Log.d("jsonaman", result);
+
+            if(result.contains("&&")) {
+                Log.d("jsonaman", result);
+
+                String splitted[]=result.split("&&");
+                String name=splitted[0];
+                String mobile=splitted[1];
+                Toast.makeText(getApplicationContext(),"Login successful.",Toast.LENGTH_LONG).show();
+                editor.putString(AppConstants.name,name);
+                editor.putString(AppConstants.email,email);
+                editor.putString(AppConstants.password,password);
+                editor.putString(AppConstants.mobile,mobile);
+                editor.putBoolean(AppConstants.registered,true);
+                editor.commit();
+                startActivity(new Intent(getApplicationContext(),NavigationActivity.class));
+                finish();
+
+            }
+            else
+                Toast.makeText(getApplicationContext(),"Please check your credentials.",Toast.LENGTH_LONG).show();
+        }
+    }
+
 }
